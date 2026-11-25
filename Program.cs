@@ -77,7 +77,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAlgorithms = [SecurityAlgorithms.HmacSha256]
         };
     });
+
 builder.Services.AddAuthorization();
+var origenes = builder.Configuration
+    .GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CharacterHubFrontend", policy => policy
+        .WithOrigins(origenes)
+        .WithMethods(HttpMethods.Get, HttpMethods.Post, HttpMethods.Put, HttpMethods.Delete)
+        .AllowAnyHeader()
+        .WithExposedHeaders("Location"));
+});
 
 var app = builder.Build();
 
@@ -90,6 +102,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseRouting();
+app.UseCors("CharacterHubFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
